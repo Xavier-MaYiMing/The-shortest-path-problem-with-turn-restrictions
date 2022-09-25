@@ -23,7 +23,7 @@ The shortest path problem with turn restrictions aims to find the shortest path 
 
 #### Example
 
-![SPPTR example](C:\Users\dell\Desktop\研究生\个人算法主页\The labeling algorithms for the shortest path problem with turn restrictions\SPPTR example.png)
+![image](https://github.com/Xavier-MaYiMing/The-labeling-algorithms-for-the-shortest-path-problem-with-turn-restrictions/blob/main/SPPTR%20example.png)
 
 ```python
 if __name__ == '__main__':
