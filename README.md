@@ -29,7 +29,7 @@ if __name__ == '__main__':
     test_network = {
         0: {2: 1},
         1: {2: 1},
-        2: {0: 1, 1: 2, 3: 2, 5: 1},
+        2: {0: 1, 1: 1, 3: 2, 5: 1},
         3: {4: 1},
         4: {5: 2},
         5: {2: 1},
@@ -41,13 +41,13 @@ if __name__ == '__main__':
 ##### Output (labeling_v1):
 
 ```python
-({'path': [0, 2, 3, 4, 5], 'length': 6}, 8, 7)
+({'path': [0, 2, 1, 2, 5], 'length': 4}, 8, 7)
 ```
 
 ##### Output (labeling_v2):
 
 ```python
-({'path': [0, 2, 3, 4, 5], 'length': 6}, 6, 6)
+({'path': [0, 2, 1, 2, 5], 'length': 4}, 6, 6)
 ```
 
 The results indicate that labeling_v2 is more efficient than labeling_v1, as it adds and extracts less labels from the priority queue.
