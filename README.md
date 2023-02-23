@@ -4,6 +4,10 @@
 
 ##### Reference: Li Qingquan, et al. A hybrid link-node approach for finding shortest paths in road networks with turn restrictions[J]. Transactions in GIS, 2015. (labeling_v2)
 
+##### labeling_v3 is the labeling algorithm for the SPPTR with improved labeling strategies.
+
+##### SPPTR_01 is a 0-1 mathematical programmimg model for the SPPTR.
+
 The shortest path problem with turn restrictions aims to find the shortest path on a network with turn restrictions.
 
 | Variables   | Meaning                                                      |
