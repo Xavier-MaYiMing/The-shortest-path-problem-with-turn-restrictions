@@ -1,95 +1,75 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @Time    : 2023/1/12 9:02
+# @Time    : 2023/4/26 16:27
 # @Author  : Xavier Ma
 # @Email   : xavier_mayiming@163.com
 # @File    : labeling_v1.py
-# @Statement : The link-based-Dijkstra's algorithm for the shortest path problem with turn restrictions
+# @Statement : The link-based labeling method for the shortest path problem with turn restrictions (SPPTR)
 # @Reference : Gutiérrez E, Medaglia A L. Labeling algorithm for the shortest path problem with turn prohibitions with application to large-scale road networks[J]. Annals of Operations Research, 2008, 157(1): 169-182.
-import heapq
+from numpy import inf
+from pqdict import PQDict
 
 
-def find_neighbor(network):
-    """
-    Find the neighbor of each node
-    :param network:
-    :return: [[the neighbor nodes of node1], [the neighbor nodes of node2], ...]
-    """
+def find_neighbors(network):
+    # find the neighbors of each node
     neighbor = []
-    for i in range(len(network)):
+    for i in network.keys():
         neighbor.append(list(network[i].keys()))
     return neighbor
 
 
-def main(network, source, destination, turn_restrictions):
+def main(network, source, destination, tr):
     """
     The main function
     :param network: {node1: {node2: length, node3: length, ...}, ...}
     :param source: the source node
     :param destination: the destination node
-    :param turn_restrictions: turn restrictions [[node1, node2, node3], ...]
+    :param tr: turn restrictions
     :return:
     """
     # Step 1. Initialize parameters
-    nn = len(network)  # node number
-    neighbor = find_neighbor(network)
-    omega = []  # the list to store explored labels
-    queue = []  # the priority queue
-    l_list = {}  # length label
-    p_list = {}  # path_ label
-    label_in = 0  # the number of labels added in the priority queue
+    neighbor = find_neighbors(network)
+    omega = []  # the list of explored labels
+    queue = PQDict({})  # priority queue
+    p_list = {}  # path label
+    label_in = 0  # the number of labels added to the priority queue
     label_out = 0  # the number of labels popped from the priority queue
-    inf = 1e10
 
-    # Step 2. Initialize labels
-    for i in range(nn):
-        for j in neighbor[i]:
-            temp_index = str([i, j])
-            l_list[temp_index] = inf
-            p_list[temp_index] = []
-
-    # Step 3. Add the first labels
+    # Step 2. Add the first labels
     for node in neighbor[source]:
-        temp_length = network[source][node]
-        temp_index = str([source, node])
-        l_list[temp_index] = temp_length
-        p_list[temp_index] = [source, node]
-        heapq.heappush(queue, (temp_length, label_in, [source, node]))
+        ind = str([source, node])
+        queue[ind] = network[source][node]
+        p_list[ind] = [source, node]
         label_in += 1
 
-    # Step 4. The main loop
+    # Step 3. The main loop
     while queue:
 
-        # Step 4.1. Select the label with the minimum length
-        length, _, label = heapq.heappop(queue)
+        # Step 3.1. Select the label with the minimum length
+        (label, length) = queue.popitem()
         label_out += 1
-        if label in omega:
-            continue
-        path = p_list[str(label)]
+        path = p_list[label]
         omega.append(label)
-        i = label[0]
-        j = label[1]
-        if length >= inf:  # no feasible solution
-            return {}
-        elif j == destination:
+        i = path[-2]
+        j = path[-1]
+        if j == destination:
             return {
                 'path': path,
                 'length': length,
                 'label in': label_in,
-                'label out': label_out
+                'label out': label_out,
             }
 
-        # Step 4.2. Extend labels
+        # Step 3.2. Extend labels
         for k in neighbor[j]:
-            if [j, k] not in omega and [i, j, k] not in turn_restrictions:
-                temp_index = str([j, k])
+            ind = str([j, k])
+            if [i, j, k] not in tr and ind not in omega:
                 temp_length = length + network[j][k]
-                if l_list[temp_index] > temp_length:
-                    l_list[temp_index] = temp_length
+                if temp_length < queue.get(ind, inf):
                     temp_path = path.copy()
                     temp_path.append(k)
-                    p_list[temp_index] = temp_path
-                    heapq.heappush(queue, (temp_length, label_in, [j, k]))
+                    queue[ind] = temp_length
+                    p_list[ind] = temp_path
                     label_in += 1
 
     return {}
