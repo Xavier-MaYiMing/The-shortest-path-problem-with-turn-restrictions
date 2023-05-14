@@ -1,111 +1,81 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @Time    : 2023/1/12 12:17
+# @Time    : 2023/5/6 14:21
 # @Author  : Xavier Ma
 # @Email   : xavier_mayiming@163.com
 # @File    : labeling_v2.py
-# @Statement : The link-based-Dijkstra for the shortest path problem with turn restrictions
+# @Statement : The hybrid link-node-based labeling method for the shortest path problem with turn restrictions (SPPTR)
 # @Reference : Li Qingquan, et al. A hybrid link-node approach for finding shortest paths in road networks with turn restrictions[J]. Transactions in GIS, 2015.
-import heapq
+from numpy import inf
+from pqdict import PQDict
 
 
-def find_neighbor(network):
-    """
-    Find the neighbor of each node
-    :param network:
-    :return: [[the neighbor nodes of node1], [the neighbor nodes of node2], ...]
-    """
+def find_neighbors(network):
+    # find the neighbors of each node
     neighbor = []
-    for i in range(len(network)):
+    for i in network.keys():
         neighbor.append(list(network[i].keys()))
     return neighbor
 
 
-def main(network, source, destination, turn_restrictions):
+def main(network, source, destination, tr):
     """
     The main function
     :param network: {node1: {node2: length, node3: length, ...}, ...}
     :param source: the source node
     :param destination: the destination node
-    :param turn_restrictions: turn restrictions [[node1, node2, node3], ...]
+    :param tr: turn restrictions
     :return:
     """
     # Step 1. Initialize parameters
-    nn = len(network)  # node number
-    neighbor = find_neighbor(network)
-    omega = []  # the list to store explored labels
-    queue = []  # the priority queue
-    l_list = {}  # length label
-    p_list = {}  # path_ label
-    label_in = 0  # the number of labels added in the priority queue
+    neighbor = find_neighbors(network)
+    omega = []  # the list of explored labels
+    queue = PQDict({})  # priority queue
+    p_list = {}  # path label
+    label_in = 0  # the number of labels added to the priority queue
     label_out = 0  # the number of labels popped from the priority queue
-    inf = 1e10
-    restricted_node = set()  # restricted nodes
-    for turn in turn_restrictions:
+    rn = set()  # restricted nodes
+    for turn in tr:
         if turn[1] != source and turn[1] != destination:
-            restricted_node.add(turn[1])
+            rn.add(turn[1])
 
-    # Step 2. Initialize labels
-    for i in range(nn):
-        for j in neighbor[i]:
-            if j in restricted_node:
-                temp_index = str([i, j])
-            else:
-                temp_index = j
-            l_list[temp_index] = inf
-            p_list[temp_index] = []
-
-    # Step 3. Add the first labels
-    l_list[source] = 0
-    p_list[source] = [source]
+    # Step 2. Add the first labels
     for node in neighbor[source]:
-        temp_length = network[source][node]
-        if node in restricted_node:
-            temp_index = str([source, node])
-        else:
-            temp_index = node
-        l_list[temp_index] = temp_length
-        p_list[temp_index] = [source, node]
-        heapq.heappush(queue, (temp_length, label_in, temp_index))
+        ind = str([source, node]) if node in rn else node
+        queue[ind] = network[source][node]
+        p_list[ind] = [source, node]
         label_in += 1
 
-    # Step 4. The main loop
+    # Step 3. The main loop
     while queue:
 
-        # Step 4.1. Select the label with the minimum length
-        length, _, label = heapq.heappop(queue)
+        # Step 3.1. Select the label with the minimum length
+        (label, length) = queue.popitem()
         label_out += 1
-        if label in omega:
-            continue
         path = p_list[label]
         omega.append(label)
         i = path[-2]
         j = path[-1]
-        if length >= inf:  # no feasible solution
-            return {}
-        elif j == destination:
+        if j == destination:
             return {
                 'path': path,
                 'length': length,
                 'label in': label_in,
-                'label out': label_out
+                'label out': label_out,
             }
 
-        # Step 4.2. Extend labels
+        # Step 3.2. Extend labels
         for k in neighbor[j]:
-            if [i, j, k] not in turn_restrictions:
-                if k in restricted_node:
-                    temp_index = str([j, k])
-                else:
-                    temp_index = k
+            ind = str([j, k]) if k in rn else k
+            if [i, j, k] not in tr and ind not in omega:
                 temp_length = length + network[j][k]
-                if temp_index not in omega and l_list[temp_index] > temp_length:
-                    l_list[temp_index] = temp_length
+                if temp_length < queue.get(ind, inf):
                     temp_path = path.copy()
                     temp_path.append(k)
-                    p_list[temp_index] = temp_path
-                    heapq.heappush(queue, (temp_length, label_in, temp_index))
+                    queue[ind] = temp_length
+                    p_list[ind] = temp_path
                     label_in += 1
+
     return {}
 
 
